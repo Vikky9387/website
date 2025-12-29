@@ -5,7 +5,10 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'docker build -t webapp .'
+                sh '''
+                docker build -t webapp .
+                docker save webapp > webapp.tar
+                '''
             }
         }
 
@@ -13,8 +16,13 @@ pipeline {
             steps {
                 sshagent(['prod-key']) {
                     sh '''
-                    ssh ubuntu@98.91.214.102 "docker rm -f webtest || true"
-                    ssh ubuntu@98.91.214.102 "docker run -d --name webtest -p 80:80 webapp"
+                    scp webapp.tar ubuntu@98.91.214.102:/home/ubuntu/
+
+                    ssh ubuntu@98.91.214.102 "
+                      docker load < /home/ubuntu/webapp.tar &&
+                      docker rm -f webtest || true &&
+                      docker run -d --name webtest -p 80:80 webapp
+                    "
                     '''
                 }
             }
@@ -25,12 +33,16 @@ pipeline {
             steps {
                 sshagent(['prod-key']) {
                     sh '''
-                    ssh ubuntu@18.215.233.0 "docker rm -f webprod || true"
-                    ssh ubuntu@18.215.233.0 "docker run -d --name webprod -p 80:80 webapp"
+                    scp webapp.tar ubuntu@18.215.233.0:/home/ubuntu/
+
+                    ssh ubuntu@18.215.233.0 "
+                      docker load < /home/ubuntu/webapp.tar &&
+                      docker rm -f webprod || true &&
+                      docker run -d --name webprod -p 80:80 webapp
+                    "
                     '''
                 }
             }
         }
     }
 }
-
