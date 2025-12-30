@@ -18,17 +18,20 @@ pipeline {
         }
 
         stage('Prod') {
-            when { branch 'master' }
-            steps {
-                sh '''
-                docker save abodeapp:latest > abodeapp.tar
-                scp abodeapp.tar ubuntu@10.0.5.125:/home/ubuntu/
-
-                ssh ubuntu@10.0.5.125 "docker load < /home/ubuntu/abodeapp.tar"
-                ssh ubuntu@10.0.5.125 "docker rm -f prodapp || true"
-                ssh ubuntu@10.0.5.125 "docker run -d --name prodapp -p 80:80 abodeapp"
-                '''
-            }
+    when {
+        expression {
+            env.GIT_BRANCH == 'origin/master' || env.BRANCH_NAME == 'master'
         }
     }
+    steps {
+        sh '''
+        docker save abodeapp:latest > abodeapp.tar
+        scp abodeapp.tar ubuntu@10.0.5.125:/home/ubuntu/
+
+        ssh ubuntu@10.0.5.125 "docker load < /home/ubuntu/abodeapp.tar"
+        ssh ubuntu@10.0.5.125 "docker rm -f prodapp || true"
+        ssh ubuntu@10.0.5.125 "docker run -d --name prodapp -p 80:80 abodeapp"
+        '''
+    }
 }
+
