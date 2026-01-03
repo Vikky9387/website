@@ -9,9 +9,9 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        git branch: 'main',
+        git branch: 'master',
             credentialsId: 'github-token',
-            url: 'https://github.com/<YOUR_GITHUB_USERNAME>/website.git'
+            url: 'https://github.com/Vikky9387/website.git'
       }
     }
 
